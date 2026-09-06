@@ -1,0 +1,365 @@
+Antarang Foundation Design System
+
+You are building a modern, accessible web platform for Antarang Foundation, an NGO helping students discover careers and make informed education and career decisions.
+
+The website should feel:
+
+Hopeful
+Human
+Empowering
+Modern
+Trustworthy
+Youthful
+Clean
+Warm
+Optimistic
+
+Avoid anything that feels corporate, flashy, startup-like, or overly playful.
+
+Overall Design Language
+
+Think of the interface as a combination of:
+
+Duolingo's optimism
+Notion's cleanliness
+Stripe's spacing
+Government accessibility standards
+NGO storytelling
+
+The UI should prioritize clarity over decoration.
+
+Lots of whitespace.
+
+Rounded corners (12-20px).
+
+Soft shadows only where necessary.
+
+Large typography.
+
+Friendly layouts.
+
+Never cluttered.
+
+Color Palette
+
+Only use these colors.
+
+Primary Green
+#50A771
+
+Primary Purple
+#7262AB
+
+Dark Text
+#49445C
+
+Background
+#E9E9E9
+
+Accent Lime
+#A5CF16
+
+Accent Yellow
+#E1AE25
+
+Rules:
+
+Green should communicate success, guidance and positive actions.
+Purple should communicate trust and education.
+Yellow and Lime are accent colors only.
+Never overuse the accent colors.
+Avoid gradients unless extremely subtle.
+Typography
+
+Use Roboto everywhere.
+
+Hierarchy:
+
+Hero Title
+48-64px
+Bold
+
+Section Title
+32-40px
+Bold
+
+Card Title
+22-24px
+Medium
+
+Body
+16-18px
+Regular
+
+Caption
+14px
+
+Line height around 1.4.
+
+Letter spacing 0.
+
+Never use decorative fonts except for optional hero illustrations.
+
+Buttons
+
+Primary Button
+
+Green background
+White text
+Large rounded corners
+
+Secondary Button
+
+Purple outline
+Purple text
+White background
+
+Tertiary
+
+Text only
+
+Hover animations should be subtle.
+
+Cards
+
+Large rounded cards.
+
+Very soft shadows.
+
+Lots of padding.
+
+Simple icons.
+
+No heavy borders.
+
+Cards should feel approachable.
+
+Layout
+
+Maximum content width:
+
+1200px
+
+Section spacing:
+
+100-140px
+
+Card spacing:
+
+24-32px
+
+Generous margins.
+
+Responsive by default.
+
+Icons
+
+Use clean outline icons.
+
+Prefer rounded icons.
+
+Avoid overly detailed illustrations.
+
+Images
+
+Photography should:
+
+Show real students.
+
+Show classrooms.
+
+Career exploration.
+
+Learning.
+
+Mentoring.
+
+Smiling faces.
+
+Authentic interactions.
+
+Natural lighting.
+
+Avoid stock-photo feeling.
+
+Where possible use black-and-white photography with colored UI overlays or brand-colored backgrounds, consistent with the organization's visual style.
+
+Illustrations
+
+Simple.
+
+Flat.
+
+Minimal.
+
+Friendly.
+
+No cartoonish style.
+
+Use geometric backgrounds inspired by the brand.
+
+Patterns
+
+Use subtle abstract geometric patterns inspired by:
+
+concentric circles
+lines
+fingerprints
+textured backgrounds
+
+Use sparingly.
+
+Only for hero sections or empty spaces.
+
+Components
+
+Every page should consistently use:
+
+Large Hero
+
+Feature Cards
+
+Statistics Cards
+
+Timeline
+
+Progress Cards
+
+Testimonials
+
+FAQ Accordion
+
+Sticky Navigation
+
+Rounded Inputs
+
+Minimal Tables
+
+Forms
+
+Simple.
+
+Large labels.
+
+High accessibility.
+
+Large touch targets.
+
+Validation messages should be friendly.
+
+Animations
+
+Very subtle.
+
+Fade
+
+Slide
+
+Scale
+
+200-350ms
+
+Avoid flashy effects.
+
+Brand Voice
+
+Every piece of copy should sound:
+
+Encouraging
+
+Empowering
+
+Honest
+
+Warm
+
+Data-backed
+
+Youth-focused
+
+Progressive
+
+Never boastful.
+
+Never guilt-inducing.
+
+Never sensational.
+
+Use facts.
+
+Speak with optimism.
+
+Examples:
+
+Instead of
+
+"Thousands of children have no future."
+
+Say
+
+"Thousands of students leave school before discovering careers they're passionate about. Together we can change that."
+
+Instead of
+
+"We transformed thousands of lives."
+
+Say
+
+"We've supported thousands of students in exploring careers aligned with their strengths."
+
+Accessibility
+
+WCAG AA contrast.
+
+Keyboard navigation.
+
+Visible focus states.
+
+ARIA labels.
+
+Responsive from mobile first.
+
+Technical Design Principles
+
+Prefer reusable components.
+
+Use consistent spacing.
+
+Design system driven.
+
+Minimal dependencies.
+
+Semantic HTML.
+
+Performance optimized.
+
+Visual References
+
+Aim for a modern NGO aesthetic rather than a corporate SaaS aesthetic.
+
+Keywords:
+
+Modern NGO
+Human-centered
+Educational
+Community
+Hopeful
+Trustworthy
+Minimal
+Warm
+Accessible
+Important Constraints
+
+Always follow these rules:
+
+Only use the approved brand colors.
+Use Roboto throughout the application.
+Use rounded components and generous whitespace.
+Keep layouts simple and easy to scan.
+Use authentic student-focused imagery.
+Never use loud gradients or neon colors.
+Accent colors (lime and yellow) should only highlight important information or calls to action.
+Every screen should feel optimistic, calm, and welcoming.
+If a design decision is ambiguous, prioritize accessibility, clarity, and emotional warmth over visual complexity.
+
+This design system should be applied consistently across all pages, components, and future additions to ensure the platform reflects Antarang Foundation's mission of empowering young people through career guidance. It aligns with the foundation's official brand guidance on colors, typography, imagery, visual style, and communication principles

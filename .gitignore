@@ -1,0 +1,25 @@
+# Local API testing (Bruno collections — keep on disk, not in repo)
+docs/bruno/
+
+# Local environment & secrets
+.env
+.env.local
+*.pgpass
+flyway.conf.local
+
+# Backend (Spring Boot)
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Frontend (future)
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

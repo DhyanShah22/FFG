@@ -1,0 +1,23 @@
+@import './styles/globals.css';
+
+/* Mappings for legacy CSS classes to Brand Design Tokens */
+:root {
+  --primary: var(--color-primary-green);
+  --primary-hover: var(--color-primary-green-hover);
+  --primary-gradient: linear-gradient(135deg, #50A771 0%, #6ec491 100%);
+  
+  --secondary: var(--color-primary-purple);
+  --secondary-gradient: linear-gradient(135deg, #7262AB 0%, #5d4f90 100%);
+  
+  --accent: var(--color-accent-lime);
+  --accent-yellow: var(--color-accent-yellow);
+  
+  --bg-main: var(--color-bg-light);
+  --bg-card: var(--color-card-bg);
+  --text-dark: var(--color-dark-text);
+  --text-medium: var(--color-text-muted);
+  --text-light: var(--color-text-subtle);
+
+  --font-family-title: var(--font-family);
+  --font-family-body: var(--font-family);
+}

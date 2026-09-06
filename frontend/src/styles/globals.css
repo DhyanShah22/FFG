@@ -1,0 +1,232 @@
+@import './variables.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-light);
+  color: var(--color-dark-text);
+  line-height: var(--line-height-standard);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Typography Hierarchy strictly following Brand Guidelines */
+h1, .hero-title {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 700;
+  color: var(--color-dark-text);
+  line-height: 1.2;
+}
+
+h2, .section-title {
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 700;
+  color: var(--color-dark-text);
+  line-height: 1.3;
+}
+
+h3, .card-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-dark-text);
+  line-height: 1.4;
+}
+
+p, body, .body-text {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-dark-text);
+  line-height: 1.5;
+}
+
+.caption-text {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* Layout container */
+.container {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.main-wrapper {
+  max-width: var(--max-content-width);
+  margin: 32px auto 60px;
+  padding: 0 24px;
+}
+
+/* Buttons according to Brand Guidelines */
+/* Primary: Green background, white text, large rounded corners */
+.btn-primary {
+  background-color: var(--color-primary-green);
+  color: #ffffff;
+  border: 2px solid var(--color-primary-green);
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-green-hover);
+  border-color: var(--color-primary-green-hover);
+}
+
+/* Secondary: Purple outline, purple text, white background */
+.btn-secondary {
+  background-color: #ffffff;
+  color: var(--color-primary-purple);
+  border: 2px solid var(--color-primary-purple);
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f7f5fd;
+  border-color: var(--color-primary-purple-hover);
+  color: var(--color-primary-purple-hover);
+}
+
+/* Tertiary: Text only */
+.btn-tertiary {
+  background: transparent;
+  color: var(--color-primary-purple);
+  border: none;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-tertiary:hover:not(:disabled) {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.btn-outline {
+  background: #ffffff;
+  color: var(--color-dark-text);
+  border: 1.5px solid var(--color-border-light);
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: #f8faf9;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Cards (Brand guidelines: 12-20px radius, soft shadows, lots of padding) */
+.brand-card {
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-subtle);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brand-card:hover {
+  box-shadow: var(--shadow-card);
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-dark-text);
+  margin-bottom: 8px;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-family: var(--font-family);
+  color: var(--color-dark-text);
+  background-color: #ffffff;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--color-primary-purple);
+  box-shadow: 0 0 0 3px rgba(114, 98, 171, 0.15);
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
