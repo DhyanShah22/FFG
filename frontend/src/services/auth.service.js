@@ -27,5 +27,23 @@ export const authService = {
   getCurrentUser: async () => {
     const res = await apiClient.get('/auth/me');
     return res.data;
+  },
+
+  forgotPassword: async ({ email, mobileNumber, profileType, channel } = {}) => {
+    const res = await apiClient.post('/auth/forgot-password', { email, mobileNumber, profileType, channel });
+    if (res?.success) return res.data ?? null;
+    throw new Error(res?.message || 'Unable to send verification code.');
+  },
+
+  resendForgotPasswordOtp: async (challengeId) => {
+    const res = await apiClient.post('/auth/forgot-password/resend', { challengeId });
+    if (res?.success) return res.data;
+    throw new Error(res?.message || 'Unable to resend verification code.');
+  },
+
+  resetPassword: async ({ challengeId, otp, newPassword }) => {
+    const res = await apiClient.post('/auth/reset-password', { challengeId, otp, newPassword });
+    if (res?.success) return true;
+    throw new Error(res?.message || 'Unable to reset password.');
   }
 };

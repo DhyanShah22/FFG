@@ -3,32 +3,67 @@ import { KeyRound, CheckCircle2, ArrowRight } from 'lucide-react';
 import { OTPVerification } from './OTPVerification';
 import { PasswordSetup } from './PasswordSetup';
 import { useToast } from '../../hooks/useToast';
+import { authService } from '../../services/auth.service';
 
 export const ForgotPasswordFlow = ({ onReturnToLogin }) => {
   const [step, setStep] = useState(1); // 1: Contact, 2: OTP, 3: New Password, 4: Success
   const [contact, setContact] = useState('');
+  const [challenge, setChallenge] = useState(null); // { challengeId, channel, destination, expiresInSeconds }
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
 
-  const handleSendOTP = (e) => {
+  const isEmail = contact.includes('@');
+
+  const handleSendOTP = async (e) => {
     e.preventDefault();
     if (!contact.trim()) {
       setErrorMsg('Please enter your registered Email or Mobile number.');
       return;
     }
     setErrorMsg('');
-    showToast(`Verification OTP sent to ${contact}`);
-    setStep(2);
+    setIsSubmitting(true);
+    try {
+      const data = await authService.forgotPassword(
+        isEmail ? { email: contact.trim() } : { mobileNumber: contact.trim() }
+      );
+      if (!data) {
+        // Backend intentionally avoids revealing whether the account exists.
+        showToast('If an account exists for that identifier, a verification OTP has been sent.');
+        return;
+      }
+      setChallenge(data);
+      showToast(`Verification OTP sent to ${data.destination || contact}`);
+      setStep(2);
+    } catch (error) {
+      setErrorMsg(error?.message || 'Unable to send verification OTP. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleOTPSuccess = () => {
-    showToast('OTP verified. Set your new password.');
+  const handleOTPSuccess = (enteredOtp) => {
+    setOtp(enteredOtp);
+    setErrorMsg('');
+    showToast('Code accepted. Set your new password to finish resetting.');
     setStep(3);
   };
 
-  const handleResetPassword = (e) => {
+  const handleResendOTP = async () => {
+    if (!challenge) return;
+    try {
+      const refreshed = await authService.resendForgotPasswordOtp(challenge.challengeId);
+      setChallenge(refreshed);
+      showToast(`New OTP sent to ${refreshed?.destination || contact}`);
+    } catch (error) {
+      showToast(error?.message || 'Unable to resend OTP.');
+    }
+  };
+
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     if (newPassword.length < 13) {
       setErrorMsg('Password must be at least 13 characters.');
@@ -39,8 +74,22 @@ export const ForgotPasswordFlow = ({ onReturnToLogin }) => {
       return;
     }
     setErrorMsg('');
-    showToast('Password reset successfully!');
-    setStep(4);
+    setIsSubmitting(true);
+    try {
+      await authService.resetPassword({
+        challengeId: challenge?.challengeId,
+        otp,
+        newPassword
+      });
+      showToast('Password reset successfully!');
+      setStep(4);
+    } catch (error) {
+      // The OTP could not be verified (invalid/expired) — send the user back to re-enter it.
+      setErrorMsg(error?.message || 'Unable to reset password. Please verify your OTP again.');
+      setStep(2);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -76,20 +125,29 @@ export const ForgotPasswordFlow = ({ onReturnToLogin }) => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
-            Send Verification OTP <ArrowRight size={16} />
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ width: '100%', marginTop: '8px' }}>
+            {isSubmitting ? 'Sending...' : 'Send Verification OTP'} <ArrowRight size={16} />
           </button>
         </form>
       )}
 
       {/* Step 2: OTP Verification */}
       {step === 2 && (
-        <OTPVerification
-          destination={contact}
-          mode={contact.includes('@') ? 'email' : 'phone'}
-          onVerifySuccess={handleOTPSuccess}
-          onResendOTP={() => showToast(`New OTP sent to ${contact}`)}
-        />
+        <>
+          {errorMsg && (
+            <div style={{ color: 'var(--color-error)', fontSize: '13px', marginBottom: '16px' }}>
+              {errorMsg}
+            </div>
+          )}
+          <OTPVerification
+            destination={challenge?.destination || contact}
+            mode={isEmail ? 'email' : 'phone'}
+            initialSeconds={challenge?.expiresInSeconds || 150}
+            showDemoHint={false}
+            onVerifySuccess={handleOTPSuccess}
+            onResendOTP={handleResendOTP}
+          />
+        </>
       )}
 
       {/* Step 3: Set New Password */}
@@ -98,7 +156,7 @@ export const ForgotPasswordFlow = ({ onReturnToLogin }) => {
           <PasswordSetup
             role="student"
             verifiedEmail={contact}
-            password={newPassword}
+            {...{ password: newPassword }}
             onChangePassword={setNewPassword}
             confirmPassword={confirmPassword}
             onChangeConfirmPassword={setConfirmPassword}
@@ -113,10 +171,10 @@ export const ForgotPasswordFlow = ({ onReturnToLogin }) => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={newPassword.length < 13 || newPassword !== confirmPassword}
+            disabled={isSubmitting || newPassword.length < 13 || newPassword !== confirmPassword}
             style={{ width: '100%', marginTop: '20px' }}
           >
-            Save New Password
+            {isSubmitting ? 'Saving...' : 'Save New Password'}
           </button>
         </form>
       )}

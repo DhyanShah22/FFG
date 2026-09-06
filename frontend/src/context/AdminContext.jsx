@@ -16,18 +16,28 @@ export const AdminProvider = ({ children }) => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [editingQuestionIdx, setEditingQuestionIdx] = useState(null);
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [isLoadingDashboardStats, setIsLoadingDashboardStats] = useState(false);
+  const [dashboardStatsError, setDashboardStatsError] = useState(null);
 
   useEffect(() => {
     const loadDashboardStats = async () => {
       if (currentUser?.role !== 'admin') {
         setDashboardStats(null);
+        setDashboardStatsError(null);
         return;
       }
+
+      setIsLoadingDashboardStats(true);
+      setDashboardStatsError(null);
       try {
         const stats = await adminService.getDashboardStats();
-        setDashboardStats(stats);
+        setDashboardStats(stats || null);
       } catch (error) {
         console.error('Unable to fetch dashboard stats:', error);
+        setDashboardStats(null);
+        setDashboardStatsError(error.message || 'Unable to load dashboard stats.');
+      } finally {
+        setIsLoadingDashboardStats(false);
       }
     };
 
@@ -239,7 +249,9 @@ export const AdminProvider = ({ children }) => {
         updateOptField,
         addOption,
         removeOption,
-        dashboardStats
+        dashboardStats,
+        isLoadingDashboardStats,
+        dashboardStatsError
       }}
     >
       {children}

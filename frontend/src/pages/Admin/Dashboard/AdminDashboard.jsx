@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, HelpCircle, Users, CheckCircle2, Settings, PlusCircle, ChevronRight, Pencil } from 'lucide-react';
+import { FileText, HelpCircle, Users, CheckCircle2, Settings, PlusCircle, ChevronRight, Pencil, FileBarChart2, Layers } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useAdmin } from '../../../hooks/useAdmin';
 import { useToast } from '../../../hooks/useToast';
@@ -14,7 +14,8 @@ export const AdminDashboard = () => {
     setAdminActiveTab,
     adminCreateNewTest,
     adminOpenTestEditor,
-    dashboardStats
+    dashboardStats,
+    isLoadingDashboardStats
   } = useAdmin();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export const AdminDashboard = () => {
   if (!currentUser || currentUser.role !== 'admin') return null;
 
   const totalAdminQ = adminTests.reduce((sum, t) => sum + (t.questions ? t.questions.length : 0), 0);
+  const formatStat = (value) => (isLoadingDashboardStats ? '…' : value);
 
   const handleCreateTest = async () => {
     const newTest = await adminCreateNewTest();
@@ -62,7 +64,7 @@ export const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-icon-box coral"><FileText size={24} /></div>
           <div className="stat-content">
-            <div className="stat-number">{dashboardStats?.totalAssessments ?? adminTests.length}</div>
+            <div className="stat-number">{adminTests.length}</div>
             <div className="stat-label">Total Tests</div>
           </div>
         </div>
@@ -76,8 +78,8 @@ export const AdminDashboard = () => {
         <div className="stat-card">
           <div className="stat-icon-box emerald"><Users size={24} /></div>
           <div className="stat-content">
-            <div className="stat-number">{dashboardStats?.totalStudents ?? MOCK_STUDENTS.length}</div>
-            <div className="stat-label">Registered Students</div>
+            <div className="stat-number">{formatStat(dashboardStats?.usersActive ?? MOCK_STUDENTS.length)}</div>
+            <div className="stat-label">Active Users</div>
           </div>
         </div>
         <div className="stat-card">
@@ -85,8 +87,22 @@ export const AdminDashboard = () => {
             <CheckCircle2 size={24} />
           </div>
           <div className="stat-content">
-            <div className="stat-number">{adminTests.filter(t => t.status === 'pending').length}</div>
-            <div className="stat-label">Active Tests</div>
+            <div className="stat-number">{formatStat(dashboardStats?.attemptsSubmitted ?? 0)}</div>
+            <div className="stat-label">Attempts Submitted</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon-box blue"><FileBarChart2 size={24} /></div>
+          <div className="stat-content">
+            <div className="stat-number">{formatStat(dashboardStats?.reportsGenerated ?? 0)}</div>
+            <div className="stat-label">Reports Generated</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon-box coral"><Layers size={24} /></div>
+          <div className="stat-content">
+            <div className="stat-number">{formatStat(dashboardStats?.configGroupsActive ?? 0)}</div>
+            <div className="stat-label">Active Config Groups</div>
           </div>
         </div>
       </div>
@@ -118,7 +134,7 @@ export const AdminDashboard = () => {
                 <td className="admin-td">
                   <span className={`type-badge type-${test.type}`}>{test.type}</span>
                 </td>
-                <td className="admin-td">{test.questions.length}</td>
+                <td className="admin-td">{test.questions?.length ?? 0}</td>
                 <td className="admin-td">{test.duration}</td>
                 <td className="admin-td">
                   <span className={`status-badge ${test.status === 'pending' ? 'completed' : 'locked'}`}>

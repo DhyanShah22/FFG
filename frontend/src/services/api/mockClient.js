@@ -58,6 +58,18 @@ let reportsStore = [
   }
 ];
 let attemptsStore = [];
+const passwordResetChallenges = new Map();
+let passwordResetChallengeCounter = 0;
+// Generates a non-guessable challenge id for the password-reset flow. Uses Web Crypto when
+// available (all supported browsers); falls back to a monotonic counter (not Math.random) so
+// this never becomes a predictable-token security issue.
+const generateChallengeId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  passwordResetChallengeCounter += 1;
+  return `challenge_${Date.now().toString(36)}_${passwordResetChallengeCounter}`;
+};
 let studentAssignmentHistory = [
   {
     assignmentId: 'assign_001',
@@ -118,7 +130,27 @@ export const mockClient = {
 
     // 10.2 List Users
     if (url === '/api/v1/users') {
-      return createPaginatedResponse(usersStore, 0, 20, usersStore.length, "Users fetched successfully");
+      const params = config.params || {};
+      let filtered = usersStore;
+      if (params.profileType) {
+        filtered = filtered.filter(u => u.profileType === params.profileType || u.userType === params.profileType);
+      }
+      if (params.status) {
+        filtered = filtered.filter(u => u.status === params.status);
+      }
+      if (params.search) {
+        const term = String(params.search).toLowerCase();
+        filtered = filtered.filter(u =>
+          (u.firstName || '').toLowerCase().includes(term) ||
+          (u.lastName || '').toLowerCase().includes(term) ||
+          (u.name || '').toLowerCase().includes(term) ||
+          (u.email || '').toLowerCase().includes(term) ||
+          (u.username || '').toLowerCase().includes(term)
+        );
+      }
+      const size = Number(params.size) || 20;
+      const page = Number(params.page) || 0;
+      return createPaginatedResponse(filtered, page, size, filtered.length, "Users fetched successfully");
     }
 
     // 10.3 Get User by ID
@@ -320,11 +352,10 @@ export const mockClient = {
     // 25.3 Admin Dashboard
     if (url === '/api/v1/admin/dashboard') {
       const dash = {
-        totalTests: testsStore.length,
-        totalQuestions: testsStore.reduce((acc, t) => acc + t.questions.length, 0),
-        totalStudents: usersStore.filter(u => u.userType === 'STUDENT').length,
-        activeTestsCount: testsStore.filter(t => t.status === 'pending').length,
-        testsOverview: testsStore
+        usersActive: usersStore.filter(u => u.status === 'ACTIVE').length,
+        attemptsSubmitted: attemptsStore.filter(a => a.status === 'SUBMITTED').length,
+        reportsGenerated: reportsStore.length,
+        configGroupsActive: configurationGroupsStore.length
       };
       return createSuccessResponse(dash, "Admin dashboard data fetched successfully");
     }
@@ -401,6 +432,58 @@ export const mockClient = {
     // 8.3 Logout
     if (url === '/api/v1/auth/logout') {
       return createSuccessResponse({}, "Logged out successfully");
+    }
+
+    // 8.5 Forgot Password - request OTP challenge
+    if (url === '/api/v1/auth/forgot-password') {
+      const email = (payload.email || '').trim().toLowerCase();
+      const mobileNumber = (payload.mobileNumber || '').trim();
+      const user = usersStore.find(u =>
+        (email && u.email.toLowerCase() === email) ||
+        (mobileNumber && u.mobileNumber === mobileNumber)
+      );
+      if (!user) {
+        // Do not reveal account existence; caller renders a generic message.
+        return createSuccessResponse(null, "If an account exists for that identifier, an OTP has been sent");
+      }
+      const channel = payload.channel || (email ? 'EMAIL' : 'MOBILE');
+      const destination = channel === 'EMAIL' ? user.email : user.mobileNumber;
+      const challenge = {
+        // Uses generateChallengeId (crypto.randomUUID) not genId/Math.random since this token gates password resets.
+        challengeId: generateChallengeId(),
+        channel,
+        destination,
+        expiresInSeconds: 150,
+        resendAvailableInSeconds: 30,
+        simulatedOtp: '1234'
+      };
+      passwordResetChallenges.set(challenge.challengeId, { ...challenge, userId: user.id });
+      return createSuccessResponse(challenge, "OTP sent");
+    }
+
+    // 8.6 Forgot Password - resend OTP
+    if (url === '/api/v1/auth/forgot-password/resend') {
+      const existing = passwordResetChallenges.get(payload.challengeId);
+      if (!existing) {
+        return createErrorResponse("OTP_INVALID", "Invalid or expired password reset request.", [], url);
+      }
+      const refreshed = { ...existing, expiresInSeconds: 150, resendAvailableInSeconds: 30 };
+      passwordResetChallenges.set(existing.challengeId, refreshed);
+      return createSuccessResponse(refreshed, "OTP resent");
+    }
+
+    // 8.7 Forgot Password - verify OTP and reset password
+    if (url === '/api/v1/auth/reset-password') {
+      const existing = passwordResetChallenges.get(payload.challengeId);
+      if (!existing || payload.otp !== existing.simulatedOtp) {
+        return createErrorResponse("OTP_INVALID", "Invalid or expired OTP.", [], url);
+      }
+      const user = usersStore.find(u => u.id === existing.userId);
+      if (user) {
+        user.password = payload.newPassword;
+      }
+      passwordResetChallenges.delete(existing.challengeId);
+      return createSuccessResponse(null, "Password has been reset successfully");
     }
 
     // 9.1 Capture Consent

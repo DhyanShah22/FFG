@@ -5,10 +5,17 @@ export const OTPVerification = ({
   destination = '', // email or phone
   mode = 'email', // 'email', 'phone', 'both'
   onVerifySuccess,
-  onResendOTP
+  onResendOTP,
+  initialSeconds = 150,
+  showDemoHint = true,
+  // Optional: defer verification to a caller-supplied async check (e.g. real backend call).
+  // When provided, it is called with the entered 4-digit code and must resolve truthy on
+  // success, or reject/return falsy with an optional Error message on failure. When omitted,
+  // falls back to the local demo mode.
+  onVerify
 }) => {
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [secondsLeft, setSecondsLeft] = useState(150); // 150s total countdown
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -61,6 +68,26 @@ export const OTPVerification = ({
     }
 
     setIsVerifying(true);
+
+    if (onVerify) {
+      Promise.resolve()
+        .then(() => onVerify(fullOtp))
+        .then((result) => {
+          setIsVerifying(false);
+          if (result === false) {
+            setErrorMsg('Invalid or expired OTP. Please try again.');
+            return;
+          }
+          setIsVerified(true);
+          if (onVerifySuccess) onVerifySuccess(fullOtp);
+        })
+        .catch((error) => {
+          setIsVerifying(false);
+          setErrorMsg(error?.message || 'Invalid or expired OTP. Please try again.');
+        });
+      return;
+    }
+
     // Simulate API verification
     setTimeout(() => {
       setIsVerifying(false);
@@ -75,7 +102,7 @@ export const OTPVerification = ({
 
   const handleResend = () => {
     setOtp(['', '', '', '']);
-    setSecondsLeft(150);
+    setSecondsLeft(initialSeconds);
     setIsResendDisabled(true);
     setErrorMsg('');
     if (onResendOTP) onResendOTP();
@@ -109,7 +136,8 @@ export const OTPVerification = ({
       </div>
 
       <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
-        Enter the 4-digit code sent to <strong>{destination || 'your registered contact'}</strong>. (Demo OTP: <strong>1234</strong>)
+        Enter the 4-digit code sent to <strong>{destination || 'your registered contact'}</strong>.
+        {showDemoHint && !onVerify && <> (Demo OTP: <strong>1234</strong>)</>}
       </p>
 
       {/* 4 Digit Boxes */}
