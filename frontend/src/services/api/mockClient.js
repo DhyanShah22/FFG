@@ -118,7 +118,27 @@ export const mockClient = {
 
     // 10.2 List Users
     if (url === '/api/v1/users') {
-      return createPaginatedResponse(usersStore, 0, 20, usersStore.length, "Users fetched successfully");
+      const params = config.params || {};
+      let filtered = usersStore;
+      if (params.profileType) {
+        filtered = filtered.filter(u => u.profileType === params.profileType || u.userType === params.profileType);
+      }
+      if (params.status) {
+        filtered = filtered.filter(u => u.status === params.status);
+      }
+      if (params.search) {
+        const term = String(params.search).toLowerCase();
+        filtered = filtered.filter(u =>
+          (u.firstName || '').toLowerCase().includes(term) ||
+          (u.lastName || '').toLowerCase().includes(term) ||
+          (u.name || '').toLowerCase().includes(term) ||
+          (u.email || '').toLowerCase().includes(term) ||
+          (u.username || '').toLowerCase().includes(term)
+        );
+      }
+      const size = Number(params.size) || 20;
+      const page = Number(params.page) || 0;
+      return createPaginatedResponse(filtered, page, size, filtered.length, "Users fetched successfully");
     }
 
     // 10.3 Get User by ID
