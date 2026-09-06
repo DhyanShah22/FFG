@@ -320,11 +320,10 @@ export const mockClient = {
     // 25.3 Admin Dashboard
     if (url === '/api/v1/admin/dashboard') {
       const dash = {
-        totalTests: testsStore.length,
-        totalQuestions: testsStore.reduce((acc, t) => acc + t.questions.length, 0),
-        totalStudents: usersStore.filter(u => u.userType === 'STUDENT').length,
-        activeTestsCount: testsStore.filter(t => t.status === 'pending').length,
-        testsOverview: testsStore
+        usersActive: usersStore.filter(u => u.status === 'ACTIVE').length,
+        attemptsSubmitted: attemptsStore.filter(a => a.status === 'SUBMITTED').length,
+        reportsGenerated: reportsStore.length,
+        configGroupsActive: configurationGroupsStore.length
       };
       return createSuccessResponse(dash, "Admin dashboard data fetched successfully");
     }
