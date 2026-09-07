@@ -18,6 +18,12 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)   # macOS
 - Tests: `./mvnw clean test`
 - API smoke script: `./scripts/smoke-signup-and-status.sh`
 
+`POST /api/v1/auth/signup` (start a signup session), `POST /api/v1/auth/login`,
+and the rest of the `/api/v1/auth/**` entry points listed in `SecurityConfig`
+are anonymous by design (stateless JWT API, CSRF disabled). Only
+`/api/v1/auth/me`, `/api/v1/auth/logout`, and other non-listed endpoints
+require a valid access token supplied via the `Authorization` request header.
+
 ### Local H2 development
 
 Run the API without PostgreSQL:
@@ -38,7 +44,7 @@ values needed for the signup API. Data is reset whenever the application stops.
 |------|---------|
 | `src/main/java/com/antarang/cap/` | Application code |
 | `src/main/resources/application.yaml` | Local DB & app config |
-| `src/main/resources/db/migration/` | Flyway SQL (V1–V16) |
+| `src/main/resources/db/migration/` | Flyway SQL (V1–V21) |
 | `scripts/` | Dev helper scripts (not production deploy) |
 | `.mvn/wrapper/` + `mvnw` | Maven Wrapper (pinned Maven version) |
 

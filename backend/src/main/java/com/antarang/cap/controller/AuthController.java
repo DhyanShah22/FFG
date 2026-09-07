@@ -2,6 +2,7 @@ package com.antarang.cap.controller;
 
 import com.antarang.cap.common.ApiResponse;
 import com.antarang.cap.dto.request.CompleteSignupRequest;
+import com.antarang.cap.dto.request.CreateSignupSessionRequest;
 import com.antarang.cap.dto.request.ForgotPasswordRequest;
 import com.antarang.cap.dto.request.GoogleLoginRequest;
 import com.antarang.cap.dto.request.LoginRequest;
@@ -13,6 +14,7 @@ import com.antarang.cap.dto.response.AuthMeResponse;
 import com.antarang.cap.dto.response.LoginResponse;
 import com.antarang.cap.dto.response.OtpChallengeResponse;
 import com.antarang.cap.dto.response.RegisterResponse;
+import com.antarang.cap.dto.response.SignupSessionResponse;
 import com.antarang.cap.service.AuthService;
 import com.antarang.cap.service.GoogleAuthService;
 import com.antarang.cap.service.SignupSessionService;
@@ -57,6 +59,16 @@ public class AuthController {
             HttpServletRequest httpRequest
     ) {
         return ApiResponse.success(googleAuthService.login(request, httpRequest), "Login successful");
+    }
+
+    /**
+     * Starts the sign-up flow by creating a new signup session.
+     * Equivalent to {@code POST /api/v1/auth/signup/sessions}, exposed at the
+     * conventional {@code /signup} path for anonymous clients.
+     */
+    @PostMapping("/signup")
+    public ApiResponse<SignupSessionResponse> signup(@Valid @RequestBody CreateSignupSessionRequest request) {
+        return ApiResponse.success(signupSessionService.createSession(request), "Signup session created");
     }
 
     /**
