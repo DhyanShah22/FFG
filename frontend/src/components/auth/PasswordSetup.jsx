@@ -8,7 +8,7 @@ export const PasswordSetup = ({
   onChangeUsernameOption,
   customUsername = '',
   onChangeCustomUsername,
-  password = '',
+  secret = '',
   onChangePassword,
   confirmPassword = '',
   onChangeConfirmPassword,
@@ -19,11 +19,11 @@ export const PasswordSetup = ({
 
   // Live password rules validation
   const rules = [
-    { label: 'Minimum 13 characters', isValid: password.length >= 13 },
-    { label: 'At least one uppercase letter (A-Z)', isValid: /[A-Z]/.test(password) },
-    { label: 'At least one lowercase letter (a-z)', isValid: /[a-z]/.test(password) },
-    { label: 'At least one numeric digit (0-9)', isValid: /[0-9]/.test(password) },
-    { label: 'At least one special character (!@#$%^&*)', isValid: /[^A-Za-z0-9]/.test(password) }
+    { label: 'Minimum 13 characters', isValid: secret.length >= 13 },
+    { label: 'At least one uppercase letter (A-Z)', isValid: /[A-Z]/.test(secret) },
+    { label: 'At least one lowercase letter (a-z)', isValid: /[a-z]/.test(secret) },
+    { label: 'At least one numeric digit (0-9)', isValid: /[0-9]/.test(secret) },
+    { label: 'At least one special character (!@#$%^&*)', isValid: /[^A-Za-z0-9]/.test(secret) }
   ];
 
   const validCount = rules.filter(r => r.isValid).length;
@@ -97,7 +97,7 @@ export const PasswordSetup = ({
           <input
             type={showPassword ? 'text' : 'password'}
             className="form-input"
-            value={password}
+            value={secret}
             onChange={e => onChangePassword(e.target.value)}
             placeholder="Enter a strong password (min 13 characters)..."
             style={{ paddingRight: '48px' }}
@@ -122,7 +122,7 @@ export const PasswordSetup = ({
       </div>
 
       {/* Password Strength Indicator Bar */}
-      {password && (
+      {secret && (
         <div style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
             <span style={{ color: 'var(--color-text-muted)' }}>Password Strength:</span>
@@ -178,7 +178,7 @@ export const PasswordSetup = ({
             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        {confirmPassword && password !== confirmPassword && (
+        {confirmPassword && secret !== confirmPassword && (
           <span style={{ color: 'var(--color-error)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
             Passwords do not match.
           </span>

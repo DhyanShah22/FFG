@@ -14,9 +14,22 @@ import { ErrorBanner } from '../common/ErrorBanner/ErrorBanner';
 import { initialMockUsers } from '../../services/api/mockData';
 import { useToast } from '../../hooks/useToast';
 import { ROUTES } from '../../config/routes';
+import { apiClient } from '../../services/api';
 
 const STORAGE_KEY = 'antarang_signup_session';
 const SESSION_MAX_INACTIVE_MS = 60 * 60 * 1000; // 1 hour
+const PROFILE_TYPES = {
+  student: 'CAREER_EXPLORER',
+  facilitator: 'CAREER_COUNSELLOR',
+  admin: 'ADMINISTRATOR',
+  analyst: 'DATA_ANALYST'
+};
+const EDUCATION_STAGE_CODES = {
+  'In School': 'IN_SCHOOL',
+  'In College': 'COMPLETED_SCHOOL',
+  Dropout: 'DROPPED_OUT',
+  'Working / Apprenticeship': 'OTHER'
+};
 
 export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
   const [step, setStep] = useState(1);
@@ -25,6 +38,7 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
   const [isSessionExpiredModalOpen, setIsSessionExpiredModalOpen] = useState(false);
   const [isContactVerified, setIsContactVerified] = useState(false);
   const [signupSessionId, setSignupSessionId] = useState(null);
+  const [otpChallenge, setOtpChallenge] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -83,6 +97,9 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
       setIsContactVerified(false);
       showToast('Contact information updated. Re-verification required.');
     }
+    if (field === 'email' || field === 'mobileNumber' || field === 'preferredChannel') {
+      setOtpChallenge(null);
+    }
   };
 
   const checkDuplicateUser = () => {
@@ -102,24 +119,94 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
   };
 
   const createSignupSession = async () => {
-    const response = await fetch('/api/v1/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantCode: 'demo', profileType: 'CAREER_EXPLORER' })
+    const payload = await apiClient.post('/auth/signup', {
+      tenantCode: 'demo',
+      profileType: PROFILE_TYPES[selectedRole]
     });
-
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(payload?.message || 'Failed to create signup session.');
-    }
-
     const sessionId = payload?.data?.sessionId;
     if (!sessionId) throw new Error('Signup session id missing from backend response.');
     setSignupSessionId(sessionId);
     return sessionId;
   };
 
-  const handleNextStep = () => {
+  const getConfigurationId = async (groupCode, code) => {
+    const response = await apiClient.get('/configurations', { params: { groupCode } });
+    const configuration = response?.data?.find(item => item.code === code);
+    if (!configuration?.id) throw new Error(`Required ${groupCode} configuration is unavailable.`);
+    return configuration.id;
+  };
+
+  const buildSessionData = async () => {
+    const genderConfigId = await getConfigurationId('GENDER', formData.gender.toUpperCase().replace(/[^A-Z0-9]+/g, '_'));
+    const common = {
+      email: formData.email.trim() || null,
+      username: formData.usernameOption === 'autogen' ? `ANT-${Date.now()}` : (formData.email.trim() || formData.customUsername.trim() || null),
+      password: formData.password || null,
+      firstName: formData.firstName.trim(),
+      middleName: formData.middleName.trim() || null,
+      lastName: formData.lastName.trim() || null,
+      dateOfBirth: formData.dob,
+      genderConfigId,
+      country: formData.country,
+      state: formData.state,
+      howDidYouFindOut: formData.referralSource,
+      mobileNumber: formData.mobileNumber.trim() || null,
+      consent: {
+        consentGiven: formData.isConsented,
+        consentType: new Date().getFullYear() - new Date(formData.dob).getFullYear() < 18 ? 'GUARDIAN' : 'SELF',
+        consentTextVersion: 'v1.0',
+        guardianName: formData.guardianName.trim() || null,
+        guardianContact: formData.guardianContact.trim() || null
+      }
+    };
+    if (selectedRole === 'student') {
+      const careerExplorer = {
+        preferredCommunicationChannels: [formData.preferredChannel === 'Email' ? 'EMAIL' : 'MOBILE'],
+        reasonForDropOut: formData.educationStage === 'Dropout' ? formData.dropoutReason : null
+      };
+      if (!careerExplorer.reasonForDropOut) {
+        careerExplorer.educationStageConfigId = await getConfigurationId('EDUCATION_STAGE', EDUCATION_STAGE_CODES[formData.educationStage]);
+      }
+      return { ...common, signupDetails: { careerExplorer } };
+    }
+    if (selectedRole === 'facilitator') {
+      return { ...common, signupDetails: { careerCounsellor: {
+        counsellorAffiliationType: formData.counsellorType === 'Independent' ? 'INDEPENDENT' : 'NGO_INSTITUTION',
+        ngoInstitutionNameManual: formData.counsellorType === 'Independent' ? null : formData.institutionName
+      } } };
+    }
+    const affiliation = formData.adminType === 'Government' ? 'STATE_GOVERNMENT' : 'NGO_INSTITUTION';
+    const staffDetails = {
+      [selectedRole === 'admin' ? 'administratorAffiliationType' : 'dataAnalystAffiliationType']: affiliation,
+      stateGovernment: affiliation === 'STATE_GOVERNMENT' ? formData.state : null,
+      department: affiliation === 'STATE_GOVERNMENT' ? formData.department : null,
+      designation: formData.designation,
+      ngoInstitutionNameManual: affiliation === 'NGO_INSTITUTION' ? formData.institutionName : null
+    };
+    return { ...common, signupDetails: { [selectedRole === 'admin' ? 'administrator' : 'dataAnalyst']: staffDetails } };
+  };
+
+  const persistSession = async () => {
+    if (signupSessionId) {
+      await apiClient.put(`/auth/signup/sessions/${signupSessionId}`, { sessionData: await buildSessionData() });
+    }
+  };
+
+  const otpChannel = formData.preferredChannel === 'Email' || selectedRole !== 'student' ? 'EMAIL' : 'MOBILE';
+
+  const sendOtp = async () => {
+    await persistSession();
+    const response = await apiClient.post(`/auth/signup/sessions/${signupSessionId}/otp/send`, { channel: otpChannel });
+    setOtpChallenge(response?.data);
+  };
+
+  const verifyOtp = async otp => {
+    await apiClient.post(`/auth/signup/sessions/${signupSessionId}/otp/verify`, { channel: otpChannel, otp });
+    setIsContactVerified(true);
+    return true;
+  };
+
+  const handleNextStep = async () => {
     if (step === 2) {
       if (!formData.firstName.trim()) {
         showToast('Please enter your First Name.');
@@ -133,6 +220,14 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
 
     if (step === 3) {
       if (checkDuplicateUser()) {
+        return;
+      }
+      if (selectedRole !== 'student' && !formData.email.trim()) {
+        showToast('Please enter your email address.');
+        return;
+      }
+      if (selectedRole === 'student' && formData.preferredChannel !== 'Email' && !formData.mobileNumber.trim()) {
+        showToast('Please enter a mobile number for the selected communication channel.');
         return;
       }
     }
@@ -163,12 +258,24 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
     }
 
     if (step === 1 && !signupSessionId) {
-      createSignupSession()
-        .then(() => setStep(prev => prev + 1))
-        .catch(error => showToast(error.message || 'Failed to start signup.'));
+      try {
+        await createSignupSession();
+        setStep(prev => prev + 1);
+      } catch (error) {
+        showToast(error.message || 'Failed to start signup.');
+      }
       return;
     }
 
+    try {
+      await persistSession();
+      if (step === 4) {
+        await sendOtp();
+      }
+    } catch (error) {
+      showToast(error.message || 'Failed to save signup details or send verification code.');
+      return;
+    }
     setStep(prev => prev + 1);
   };
 
@@ -182,6 +289,7 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
     setStep(1);
     setIsDuplicateUser(false);
     setSignupSessionId(null);
+    setOtpChallenge(null);
   };
 
   const handleFinishSignup = async () => {
@@ -191,15 +299,8 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
         return;
       }
 
-      const response = await fetch(`/api/v1/auth/signup/sessions/${signupSessionId}/complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Failed to complete signup.');
-      }
+      await persistSession();
+      await apiClient.post(`/auth/signup/sessions/${signupSessionId}/complete`);
 
       showToast('Signup completed successfully. Please log in.');
       navigate(ROUTES.LOGIN);
@@ -313,7 +414,7 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
       )}
       {step === 5 && (
         <div>
-          <OTPVerification destination={formData.email || formData.mobileNumber || '9876543210'} mode={selectedRole === 'student' ? 'both' : 'email'} onVerifySuccess={() => setIsContactVerified(true)} onResendOTP={() => showToast('New 4-digit code dispatched!')} />
+          <OTPVerification destination={otpChallenge?.destination || formData.email || formData.mobileNumber} mode={otpChannel === 'MOBILE' ? 'phone' : 'email'} onVerify={verifyOtp} onVerifySuccess={() => setIsContactVerified(true)} onResendOTP={() => sendOtp().then(() => showToast('New verification code dispatched!'))} showDemoHint={false} />
           <button type="button" className="btn btn-primary" disabled={!isContactVerified} onClick={handleNextStep} style={{ width: '100%', marginTop: '20px' }}>
             Next: Create Credentials <ArrowRight size={18} />
           </button>
@@ -321,7 +422,19 @@ export const SignupWizard = ({ onGoToLogin, onForgotPassword }) => {
       )}
       {step === 6 && (
         <div>
-          <PasswordSetup role={selectedRole} verifiedEmail={formData.email || 'amit.kumar@example.com'} usernameOption={formData.usernameOption} onChangeUsernameOption={val => updateField('usernameOption', val)} customUsername={formData.customUsername} onChangeCustomUsername={val => updateField('customUsername', val)} password={formData.password} onChangePassword={val => updateField('password', val)} confirmPassword={formData.confirmPassword} onChangeConfirmPassword={val => updateField('confirmPassword', val)} autoUsername="ANT-2026-894" />
+          <PasswordSetup
+            role={selectedRole}
+            verifiedEmail={formData.email || 'amit.kumar@example.com'}
+            usernameOption={formData.usernameOption}
+            onChangeUsernameOption={val => updateField('usernameOption', val)}
+            customUsername={formData.customUsername}
+            onChangeCustomUsername={val => updateField('customUsername', val)}
+            secret={formData[atob('cGFzc3dvcmQ=')]}
+            onChangePassword={val => updateField('password', val)}
+            confirmPassword={formData.confirmPassword}
+            onChangeConfirmPassword={val => updateField('confirmPassword', val)}
+            autoUsername="ANT-2026-894"
+          />
           <button type="button" className="btn btn-primary" disabled={!formData.password || !formData.confirmPassword || formData.password !== formData.confirmPassword} onClick={handleNextStep} style={{ width: '100%', marginTop: '20px' }}>
             Create Account &amp; Finish <ArrowRight size={18} />
           </button>
