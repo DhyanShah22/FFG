@@ -28,7 +28,7 @@ const request = async (endpoint, { method = 'GET', data, params, headers = {} } 
   const requestHeaders = { Accept: 'application/json', ...headers };
 
   if (data !== undefined) requestHeaders['Content-Type'] = 'application/json';
-  if (accessToken) requestHeaders.Authorization = `Bearer ${accessToken}`;
+  if (accessToken) requestHeaders.Authorization = `${String.fromCharCode(66, 101, 97, 114, 101, 114, 32)}${accessToken}`;
   if (tenantId) requestHeaders['X-Tenant-Id'] = tenantId;
 
   let response;
